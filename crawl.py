@@ -19,33 +19,43 @@ class writer_wrapper(object):
         with self.lock:
             self.dest.close()
 class UrlPool(object):
+
     def __init__(self):
         self.lock =threading.Lock()
         self.urlpool = []
         self.urldone = {}
         self.urlworking = {}
-    def next(self):
-        while len(self.urlpool) == 0 and len(self.urlworking) > 0:
-            time.sleep(0.1)
-        with self.lock:
-            if len(self.urlpool) ==0 and len(self.urlworking) == 0:
-                raise StopIteration
 
-            url = self.urlpool.pop()
-            self.urlworking[url] = 0
-            return url
+    def next(self):
+        while True:
+            with self.lock:
+                if len(self.urlpool) ==0 and len(self.urlworking) == 0:
+                    raise StopIteration
+                if len(self.urlpool) > 0:
+                    url = self.urlpool.pop()
+                    self.urlworking[url] = 0
+                    return url
+            time.sleep(1)                    
+
     def __iter__(self):
         return self
+
     def done(self,url):
         with self.lock:
             if url in self.urlworking:
                 del self.urlworking[url]
                 self.urldone[url]=0
+
     def addUrl(self,url):
         with self.lock:
             if url not in self.urlworking and\
                 url not in self.urldone:
                     self.urlpool.append(url)
+
+    def reStack(self,url):
+        with self.lock:
+           self.urlpool.append(url)
+           del self.urlworking[ur]
 class crawler:
 
     def __init__(self,seed,accepted_pattern,MAX_THREADS=1):
@@ -57,36 +67,40 @@ class crawler:
 
     def run(self,writer):
         for url in self.pool:
-            parser = ParseMSDN()
-            #writer.write("visiting "+ url+"\n")
-            parser.feed( urllib.urlopen(url).read())
-            if parser.isCode:
-                module = parser.dll.lower()
-                if module.find(".dll") != -1:
-                    module=module[:module.find(".dll")]
-                msg = ""
-                msg += "{} {} {}.{}".format(parser.ret,parser.conv,module,parser.name)
-                msg += "("
-                for i,a in enumerate(parser.arguments):
-                    if i>0:
-                        msg += ","
-                    msg += "{}".format(a)
-                msg +="\n"
-                for v in parser.var:
-                    msg += "{} {} {}.{}".format(parser.ret,parser.conv,module,v)
+            try:                
+                parser = ParseMSDN()
+                #writer.write("visiting "+ url+"\n")
+                parser.feed( urllib.urlopen(url).read())
+                if parser.isCode:
+                    module = parser.dll.lower()
+                    if module.find(".dll") != -1:
+                        module=module[:module.find(".dll")]
+                    else: module = "None"
+                    msg = ""
+                    msg += "{} {} {}.{}".format(parser.ret,parser.conv,module,parser.name)
                     msg += "("
                     for i,a in enumerate(parser.arguments):
                         if i>0:
                             msg += ","
                         msg += "{}".format(a)
-                    msg += "\n"
-                writer.write(msg)
-            parser.close()
-            self.pool.done(url)
-            for item in parser.links:
-                if re.match(self.accepted,item) :
-                    self.pool.addUrl( item )
-
+                    msg +=")\n"
+                    for v in parser.var:
+                        msg += "{} {} {}.{}".format(parser.ret,parser.conv,module,v)
+                        msg += "("
+                        for i,a in enumerate(parser.arguments):
+                            if i>0:
+                                msg += ","
+                            msg += "{}".format(a)
+                        msg += ")\n"
+                    writer.write(msg)
+                parser.close()
+                self.pool.done(url)
+                for item in parser.links:
+                    if re.match(self.accepted,item) :
+                        self.pool.addUrl( item )
+            except IOError as e:
+                print >>sys.stderr, "Error {}".format(e)
+                self.pool.reStack(url)
     def start(self,writer):
         t = []
         for i in range(0,self.MAX_THREADS):
@@ -119,7 +133,7 @@ def main():
     url="https://msdn.microsoft.com/en-us/library/windows/desktop/dd239108(v=vs.85).aspx"
     url = "https://msdn.microsoft.com/en-us/library/windows/desktop/aa363851(v=vs.85).aspx"
     c = crawler(url,".*en-us/library/windows/desktop.*",MAX_THREADS)
-    writer = writer_wrapper()
+    writer = writer_wrapper("names.txt")
     c.start(writer)
 
 if __name__ == "__main__":
