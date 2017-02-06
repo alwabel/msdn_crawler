@@ -25,9 +25,9 @@ class ParseMSDN(HTMLParser.HTMLParser):
         self.DLL = 2
         self.VARIATION = 3
 
-        self.header = None
-        self.library = None 
-        self.dll = None
+        self.header = ""
+        self.library = ""
+        self.dll =""
         self.var = []
         self.ret = self.conv = self.name = self.arguments= None
     def parse_function(self,func):
@@ -56,9 +56,9 @@ class ParseMSDN(HTMLParser.HTMLParser):
         return ret,conv,name,arguments
     def handle_data(self,data):
         if self.tag == "pre" and not self.isCode:
-            print "============================",self.tag
-            print data
-            print "============================"
+            #print "============================",self.tag
+            #print data
+            #print "============================"
             data = data.replace("\n","")
             data = data.replace("\xc2\xa0"," ")
             data = re.sub(r'\s+',' ',data)

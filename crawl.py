@@ -4,7 +4,7 @@ import urllib
 import sys
 from parser import *
 import threading
-
+import time
 class writer_wrapper(object):
     def __init__(self,dest=sys.stdout):
         self.lock = threading.Lock()
@@ -13,23 +13,26 @@ class writer_wrapper(object):
         else: self.dest = dest
     def write(self,msg):
         with self.lock:
-            print >> self.dest,msg
+            self.dest.write(msg)
 
     def close(self):
         with self.lock:
             self.dest.close()
 class UrlPool(object):
     def __init__(self):
-        self.lock =threading.Loc()
+        self.lock =threading.Lock()
         self.urlpool = []
         self.urldone = {}
         self.urlworking = {}
     def next(self):
+        while len(self.urlpool) == 0 and len(self.urlworking) > 0:
+            time.sleep(0.1)
         with self.lock:
-            if len(urlpool) ==0 and len(self.urlworking) == 0:
+            if len(self.urlpool) ==0 and len(self.urlworking) == 0:
                 raise StopIteration
-            url = self.urlpool()
-            self.urlworing[url] = 0
+
+            url = self.urlpool.pop()
+            self.urlworking[url] = 0
             return url
     def __iter__(self):
         return self
@@ -37,45 +40,62 @@ class UrlPool(object):
         with self.lock:
             if url in self.urlworking:
                 del self.urlworking[url]
-                self.urldone[url]
-    def add_url(self,url):
+                self.urldone[url]=0
+    def addUrl(self,url):
         with self.lock:
             if url not in self.urlworking and\
                 url not in self.urldone:
-                    self.urlpool.add(url)
+                    self.urlpool.append(url)
 class crawler:
-    def __init__(self,seed,accepted_pattern):
+
+    def __init__(self,seed,accepted_pattern,MAX_THREADS=1):
         self.accepted=accepted_pattern
-        self.fresh_links = set()
-        self.visited_links = {}
-        self.fresh_links.add(seed)
-    def start(self,writer):
-        while len(self.fresh_links) > 0:
+        self.seed = seed
+        self.pool = UrlPool()
+        self.pool.addUrl(self.seed)
+        self.MAX_THREADS = MAX_THREADS
+
+    def run(self,writer):
+        for url in self.pool:
             parser = ParseMSDN()
-            url = self.fresh_links.pop()
-            writer.write("visiting "+ url+"\n")
+            #writer.write("visiting "+ url+"\n")
             parser.feed( urllib.urlopen(url).read())
             if parser.isCode:
                 module = parser.dll.lower()
                 if module.find(".dll") != -1:
                     module=module[:module.find(".dll")]
-                    writer.write("{} {}.{}".format(parser.conv,module,parser.name))
-                    writer.write("(")
-                    for a in parser.arguments:
-                       writer.write("{}".format(a))
-                       writer.write(")")
-                       writer.write(":{}\n".format(parser.ret))
+                msg = ""
+                msg += "{} {} {}.{}".format(parser.ret,parser.conv,module,parser.name)
+                msg += "("
+                for i,a in enumerate(parser.arguments):
+                    if i>0:
+                        msg += ","
+                    msg += "{}".format(a)
+                msg +="\n"
                 for v in parser.var:
-                    writer.write("{}.{}:{}\n".format(module,v,parser.ret))
-
+                    msg += "{} {} {}.{}".format(parser.ret,parser.conv,module,v)
+                    msg += "("
+                    for i,a in enumerate(parser.arguments):
+                        if i>0:
+                            msg += ","
+                        msg += "{}".format(a)
+                    msg += "\n"
+                writer.write(msg)
             parser.close()
-            self.visited_links[url]=0
-
+            self.pool.done(url)
             for item in parser.links:
-                if re.match(self.accepted,item) and \
-                    item not in self.visited_links:
-                    self.fresh_links.add(item)
+                if re.match(self.accepted,item) :
+                    self.pool.addUrl( item )
 
+    def start(self,writer):
+        t = []
+        for i in range(0,self.MAX_THREADS):
+            d = threading.Thread(target=self.run,args=(writer,) )       
+            t.append( d )
+            d.start()
+    
+        for i in t:
+            i.join()
 import ConfigParser
 def main():
     Config = ConfigParser.ConfigParser()
@@ -98,7 +118,7 @@ def main():
     url="https://msdn.microsoft.com/en-us/library/windows/desktop/bg126469(v=vs.85).aspx"
     url="https://msdn.microsoft.com/en-us/library/windows/desktop/dd239108(v=vs.85).aspx"
     url = "https://msdn.microsoft.com/en-us/library/windows/desktop/aa363851(v=vs.85).aspx"
-    c = crawler(url,".*en-us/library/windows/desktop.*")
+    c = crawler(url,".*en-us/library/windows/desktop.*",MAX_THREADS)
     writer = writer_wrapper()
     c.start(writer)
 
