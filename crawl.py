@@ -55,7 +55,7 @@ class UrlPool(object):
     def reStack(self,url):
         with self.lock:
            self.urlpool.append(url)
-           del self.urlworking[ur]
+           del self.urlworking[url]
 class crawler:
 
     def __init__(self,seed,accepted_pattern,MAX_THREADS=1):
