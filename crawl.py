@@ -68,7 +68,7 @@ class crawler:
     def run(self,writer):
         for url in self.pool:
             try:                
-                parser = ParseMSDN()
+                parser = ParseMSDN("https://www.microsoft.com")
                 #writer.write("visiting "+ url+"\n")
                 parser.feed( urllib.urlopen(url).read())
                 if parser.isCode:
@@ -96,7 +96,7 @@ class crawler:
                 parser.close()
                 self.pool.done(url)
                 for item in parser.links:
-                    if re.match(self.accepted,item) :
+                    if re.match(self.accepted,item) and item.find("newlocale=") == -1:
                         self.pool.addUrl( item )
             except IOError as e:
                 print >>sys.stderr, "Error {}".format(e)
@@ -104,7 +104,9 @@ class crawler:
             except TypeError as e:
                 print >> sys.stderr, "Error {}".format(e)
                 print >> sys.stderr, url
-
+            except UnicodeDecodeError as e:
+                print >> sys.stderr, "Error {}".format(e)
+                print >> sys.stderr, url
     def start(self,writer):
         t = []
         for i in range(0,self.MAX_THREADS):

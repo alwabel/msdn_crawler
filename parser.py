@@ -3,6 +3,8 @@ import HTMLParser
 import urllib
 import sys
 import re
+import urlparse
+
 class Argument:
     def __init__(self,access=None,type=None,name=None):
         self.type = type
@@ -13,7 +15,8 @@ class Argument:
 
 
 class ParseMSDN(HTMLParser.HTMLParser):
-    def __init__(self):
+    def __init__(self,base):
+        self.base = base
         HTMLParser.HTMLParser.__init__(self)
         self.links = set()
         self.tag = ""
@@ -95,13 +98,13 @@ class ParseMSDN(HTMLParser.HTMLParser):
                 #if data.beginswith(self.api_name):
                  #print "---",data
                  self.var.append(data)
-
     def handle_starttag(self,tag,attr):
         self.tag = tag
         if tag == 'a':
             for (key,value) in attr:
                 if key == "href":
-                    self.links.add(value)
+                    url =urlparse.urljoin(self.base,value)
+                    self.links.add(url)
     def handle_endtag(self,tag):
         if tag == "table":
             self.expect=-1
