@@ -34,28 +34,26 @@ class ParseMSDN(HTMLParser.HTMLParser):
         self.var = []
         self.ret = self.conv = self.name = self.arguments= None
     def parse_function(self,func):
-        regex = "([a-zA-Z_]+[a-zA-Z_0-9]([\s\t]*\*)?)" #return type
-        regex += "[\s\t]+"
-        regex += "([A-Z_a-z]+)" #call convention
-        regex += "[\s\t]+"
-
-        regex += "([a-zA-Z_]+[a-zA-Z_0-9_]*)" #function name
+        regex = "[\s\t]*([a-zA-Z]+[a-zA-Z_0-9]*)"#([\s\t]*\*)?)" #return type
+        regex += "(([\s\t]+)([A-Za-z_0-9]+))?" #call convention
+        regex += "[\s\t]+([a-zA-Z_]+[a-zA-Z_0-9_]*)" #function name
         regex += "[\s\t]*"
         regex += "\(([^\)\(]+)\)" #parmeter
+
         m = re.match(regex,func)
         ret = conv = name = param = None
         arguments = []
         if m:
             groups = m.groups()
             ret = groups[0]
-            conv = groups[2]
-            name = groups[3]
-            param =groups[4]
+            conv = groups[3]
+            name = groups[4]
+            param =groups[5]
             param = param.split(',')
             for p in param:
                 p = p.strip()
                 a=Argument(*p.split(' '))
-                arguments.append(a)
+                arguments.append(str(a))
         return ret,conv,name,arguments
     def handle_data(self,data):
         if self.tag == "pre" and not self.isCode:
@@ -65,7 +63,6 @@ class ParseMSDN(HTMLParser.HTMLParser):
             data = data.replace("\n","")
             data = data.replace("\xc2\xa0"," ")
             data = re.sub(r'\s+',' ',data)
-            #print data
             self.ret,self.conv,self.name,self.arguments=self.parse_function(data)
             if self.name:
                 self.isCode=True
@@ -112,13 +109,13 @@ class ParseMSDN(HTMLParser.HTMLParser):
 
 def main():
     url = sys.argv[1]
-    parser=ParseMSDN()
+    parser=ParseMSDN("http://msdn.microsoft.com/")
     parser.feed( urllib.urlopen(url).read())
     if parser.name:
         module = parser.dll.lower()
         if module.find(".dll") != -1:
             module=module[:module.find(".dll")]
-        sys.stdout.write("{} {}.{}".format(parser.conv,module,parser.name))
+        sys.stdout.write("{} {}.{}".format(parser.ret,module,parser.name))
         sys.stdout.write("(")
         for a in parser.arguments:
             sys.stdout.write("{}".format(a))

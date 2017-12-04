@@ -10,7 +10,7 @@ def main():
     src = sys.argv[1]
     for r,d,f in os.walk(src):
         for file in f:
-            parser = ParseMSDN("https://www.microsoft.com")
+            parser = ParseMSDN("https://msdn.microsoft.com")
             handler = open(os.path.join(r,file),"r")
             parser.feed( handler.read() )
             if parser.isCode:

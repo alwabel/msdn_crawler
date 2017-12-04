@@ -68,7 +68,7 @@ class crawler:
     def run(self,writer):
         for url in self.pool:
             try:                
-                parser = ParseMSDN("https://www.microsoft.com")
+                parser = ParseMSDN("https://msdn.microsoft.com")
                 #writer.write("visiting "+ url+"\n")
                 parser.feed( urllib.urlopen(url).read())
                 if parser.isCode:
@@ -107,6 +107,8 @@ class crawler:
             except UnicodeDecodeError as e:
                 print >> sys.stderr, "Error {}".format(e)
                 print >> sys.stderr, url
+            except Exception as e:
+                print >> sys.stderr, "Error {}".format(e)
     def start(self,writer):
         t = []
         for i in range(0,self.MAX_THREADS):
@@ -138,7 +140,7 @@ def main():
     url="https://msdn.microsoft.com/en-us/library/windows/desktop/bg126469(v=vs.85).aspx"
     url="https://msdn.microsoft.com/en-us/library/windows/desktop/dd239108(v=vs.85).aspx"
     url = "https://msdn.microsoft.com/en-us/library/windows/desktop/aa363851(v=vs.85).aspx"
-    c = crawler(url,".*en-us/library/windows/desktop.*",MAX_THREADS)
+    c = crawler(url,".*msdn.*en-us/library/windows/desktop.*",MAX_THREADS)
     writer = writer_wrapper("names.txt")
     c.start(writer)
 
