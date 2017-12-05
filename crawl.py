@@ -101,14 +101,17 @@ class crawler:
             except IOError as e:
                 print >>sys.stderr, "Error {}".format(e)
                 self.pool.reStack(url)
+
             except TypeError as e:
                 print >> sys.stderr, "Error {}".format(e)
                 print >> sys.stderr, url
+                self.pool.done(url)
             except UnicodeDecodeError as e:
                 print >> sys.stderr, "Error {}".format(e)
                 print >> sys.stderr, url
+                self.pool.done(url)
             except Exception as e:
-                print >> sys.stderr, "Error {}".format(e)
+                print >> sys.stderr, "Error {} {}".format(e,type(e))
     def start(self,writer):
         t = []
         for i in range(0,self.MAX_THREADS):
