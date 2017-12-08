@@ -1,2 +1,2 @@
 [parameters]
-MAX_THREADS: 20000
+MAX_THREADS: 500
