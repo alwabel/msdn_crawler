@@ -70,7 +70,8 @@ class UrlPool(object):
         print >> f,"#WORKING"
         for w in self.urlworking:
           print >>f, w
-  
+      print "CHECKPOINT written"
+     
   def readcheckpoint(self):
     with open("checkpoint","r") as f:
       print "Reading CHECKPOINT"
@@ -91,12 +92,13 @@ class UrlPool(object):
             u[line] = 0
 class crawler:
 
-  def __init__(self,seed,accepted_pattern,MAX_THREADS=1,checkpoint = False):
+  def __init__(self,seed,accepted_pattern,MAX_THREADS=1,checkpoint = False,checkpoint_freq=60):
     self.accepted=accepted_pattern
     self.seed = seed
     self.pool = UrlPool()
     self.pool.addUrl(self.seed)
     self.MAX_THREADS = MAX_THREADS
+    self.checkpoint_freq = checkpoint_freq
     if checkpoint:
       self.pool.readcheckpoint()
 
@@ -151,7 +153,7 @@ class crawler:
     time.sleep(60)
     while len(self.pool.urlpool) > 0:
       self.pool.checkpoint()
-      time.sleep(30)
+      time.sleep(self.checkpoint_freq)
   def start(self,writer):
     t = []
     for i in range(0,self.MAX_THREADS):
@@ -169,9 +171,12 @@ def main():
   Config = ConfigParser.ConfigParser()
   Config.read("config")
   options = Config.options("parameters")
+  checkpoint_freq = 60 #Save checkpoint every 60 seconds
   for o in options:
     if o.upper() == "MAX_THREADS":
       MAX_THREADS = int(Config.get("parameters",o))
+    elif o.upper() == "CHECKPOINT_FREQ":
+      checkpoint_freq = int(Config.get("parameters",o))
   '''
   parser = ParseMSDN()
   url="https://msdn.microsoft.com/en-us/library/windows/desktop/bg126469(v=vs.85).aspx"
@@ -189,7 +194,7 @@ def main():
   checkpoint = False
   if len(sys.argv) > 1  :
     checkpoint = True
-  c = crawler(url,".*msdn.*en-us/library/windows/desktop.*",MAX_THREADS,checkpoint)
+  c = crawler(url,".*msdn.*en-us/library/windows/desktop.*",MAX_THREADS,checkpoint,checkpoint_freq)
   writer = writer_wrapper("names.txt")
   c.start(writer)
 
