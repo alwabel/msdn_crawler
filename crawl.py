@@ -136,7 +136,7 @@ class crawler:
           if re.match(self.accepted,item) and item.find("newlocale=") == -1:
             self.pool.addUrl( item )
       except IOError as e:
-        print >>sys.stderr, "Error {}".format(e)
+        print >>sys.stderr, "Error1 {} {}".format(e,url)
         self.pool.reStack(url)
       except TypeError as e:
         print >> sys.stderr, "Error {}".format(e)
