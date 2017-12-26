@@ -33,6 +33,8 @@ class ParseMSDN(HTMLParser.HTMLParser):
         self.dll =""
         self.var = []
         self.ret = self.conv = self.name = self.arguments= None
+        self.record_pre = False
+        self.pre_data = ""
     def parse_function(self,func):
         regex = "[\s\t]*([a-zA-Z]+[a-zA-Z_0-9]*)"#([\s\t]*\*)?)" #return type
         regex += "(([\s\t]+)([A-Za-z_0-9]+))?" #call convention
@@ -56,17 +58,21 @@ class ParseMSDN(HTMLParser.HTMLParser):
                 arguments.append(str(a))
         return ret,conv,name,arguments
     def handle_data(self,data):
+        
+        '''
         if self.tag == "pre" and not self.isCode:
-            #print "============================",self.tag
-            #print data
-            #print "============================"
+            print "============================",self.tag
+            print data
+            print "============================"
             data = data.replace("\n","")
             data = data.replace("\xc2\xa0"," ")
             data = re.sub(r'\s+',' ',data)
             self.ret,self.conv,self.name,self.arguments=self.parse_function(data)
             if self.name:
                 self.isCode=True
-
+        '''                
+        if self.record_pre :
+            self.pre_data += data
         elif self.isCode: 
             if self.tag == "p":
                 if data == "Unicode and ANSI names":
@@ -102,15 +108,31 @@ class ParseMSDN(HTMLParser.HTMLParser):
                 if key == "href":
                     url =urlparse.urljoin(self.base,value)
                     self.links.add(url)
+        elif tag == 'pre' and not self.isCode:
+          self.pre_data = ""
+          self.record_pre = True
     def handle_endtag(self,tag):
         if tag == "table":
-            self.expect=-1
+          self.expect=-1
+        elif tag == 'pre':
+          self.record_pre= False  
+          data = self.pre_data
+          data = data.replace("\n","")
+          data = data.replace("\xc2\xa0"," ")
+          data = re.sub(r'\s+',' ',data)
+          self.ret,self.conv,self.name,self.arguments=self.parse_function(data)
+          if self.name:
+            self.isCode=True
+
         self.tag = ""
 
 def main():
     url = sys.argv[1]
     parser=ParseMSDN("http://msdn.microsoft.com/")
-    parser.feed( urllib.urlopen(url).read())
+    #data = urllib.urlopen(url).read()
+    #f = open("web.html","r")
+    #parser.feed( f.read() )
+    parser.feed( urllib.urlopen(url).read() )
     if parser.name:
         module = parser.dll.lower()
         if module.find(".dll") != -1:

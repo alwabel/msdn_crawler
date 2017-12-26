@@ -191,6 +191,7 @@ def main():
   url="https://msdn.microsoft.com/en-us/library/windows/desktop/bg126469(v=vs.85).aspx"
   url="https://msdn.microsoft.com/en-us/library/windows/desktop/dd239108(v=vs.85).aspx"
   url = "https://msdn.microsoft.com/en-us/library/windows/desktop/aa363851(v=vs.85).aspx"
+  url = "https://msdn.microsoft.com/en-us/library/windows/desktop/ms724397(v=vs.85).aspx"
   checkpoint = False
   if len(sys.argv) > 1  :
     checkpoint = True
