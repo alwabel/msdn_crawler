@@ -15429,7 +15429,7 @@ int None ws2_32.getipv4sourcefilter(_In_ SOCKET Socket,_In_ IN_ADDR Interface,_I
 int None ws2_32.getsockopt(_In_ SOCKET s,_In_ int level,_In_ int optname,_Out_ char *optval,_Inout_ int *optlen)
 int None ws2_32.ioctlsocket(_In_ SOCKET s,_In_ long cmd,_Inout_ u_long *argp)
 int None ws2_32.listen(_In_ SOCKET s,_In_ int backlog)
-int None ws2_32.recv(_In_ SOCKET s,_Out_ char *buf,_In_ int len,_In_ int flags)
+int None ws2_32.recv(_In_ SOCKET s,_Out_ char* buf,_In_ int len,_In_ int flags)
 int None ws2_32.shutdown(_In_ SOCKET s,_In_ int how)
 int None ws2_32.WSACancelAsyncRequest(_In_ HANDLE hAsyncTaskHandle)
 int None ws2_32.WSACleanup(void None None)
@@ -21933,4 +21933,13 @@ XMVECTOR None None.XMVectorSetIntByIndex(XMVECTOR V None,uint32_t x None,size_t 
 XpsThumbnail None None.AddThumbnail(XpsImageType imageType None)
 YIELDPROC None None.mciGetYieldProc(MCIDEVICEID IDDevice None,LPDWORD lpdwYieldData None)
 #cat names_last.txt n1.txt n2.txt n3.txt n4.txt b1.txt b2.txt | perl -e 'while($line=<STDIN>) { chop $line; print "$line\n" if(not $line =~/^(protected|private|public)/); }' | sort -u > winapi.txt
-
+int None ws2_32.recv(_In_ SOCKET s,_Out_ char *buf,_In_ int len,_In_ int flags)
+int None ws2_32.bind(_In_ SOCKET s, _In_ sockaddr* name, _In_ int namelen)
+int None ws2_32.getsockname(_In_ SOCKET s, _Out_ sockaddr *name, _Inout_ int* namelen)
+int WSAAPI ws2_32.GetAddrInfoW( _In_opt_       PCWSTR     pNodeName,  _In_opt_       PCWSTR     pServiceName,  _In_opt_ ADDRINFOW* pHints,  _Out_ PADDRINFOW* ppResult)
+int None ws2_32.connect(_In_ SOCKET s, _In_ struct sockaddr* name, _In_ int namelen)
+int None ws2_32.getsockname(_In_ SOCKET  s, _Out_  sockaddr* name, _Inout_ int* namelen)
+int None ws2_32.getpeername(_In_  SOCKET  s, _Out_  sockaddr* name, _Inout_ int* namelen)
+int None ws2_32.send(_In_ SOCKET s, _In_ char* buf,  _In_  int    len, _In_  int    flags)
+int None ws2_32.sendto( _In_  SOCKET s, _In_ char* buf, _In_ int len, _In_ int  flags,_In_ sockaddr* to,  _In_  int  tolen)
+int None ws2_32.select( _In_  int  nfds, _Inout_ fd_set* readfds,  _Inout_ fd_set* writefds, _Inout_ fd_set* exceptfds,  _In_   timeval* timeout)
